@@ -1,98 +1,132 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# ReactNativeFirebase
 
-# Getting Started
+React Native app with **Firebase** (App, Auth, Firestore) for Android and iOS.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+- **React Native** 0.82.1  
+- **@react-native-firebase/app**, **auth**, **firestore** (v23.x)  
+- **Node** >= 22.11.0  
 
-## Step 1: Start Metro
+---
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Prerequisites
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- [React Native environment](https://reactnative.dev/docs/set-up-your-environment) (Node, JDK, Android Studio / Xcode)
+- A [Firebase project](https://console.firebase.google.com/) with your app registered for Android and iOS
+- **iOS:** Ruby (for CocoaPods), Xcode, CocoaPods  
+- **Android:** Android Studio, SDK 24+, Gradle  
 
-```sh
-# Using npm
-npm start
+---
 
-# OR using Yarn
-yarn start
+## Installation
+
+```bash
+npm install
 ```
 
-## Step 2: Build and run your app
+---
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## iOS setup
 
-### Android
+### Already configured in the project
 
-```sh
-# Using npm
-npm run android
+- **AppDelegate** (`ios/ReactNativeFirebase/AppDelegate.swift`): `FirebaseCore` imported and `FirebaseApp.configure()` called in `didFinishLaunchingWithOptions`.
+- **Podfile** (`ios/Podfile`): `use_frameworks! :linkage => :static` and `$RNFirebaseAsStaticFramework = true` for React Native Firebase.
 
-# OR using Yarn
-yarn android
-```
+### What you need to do
 
-### iOS
+1. **Add Firebase config file**
+   - In [Firebase Console](https://console.firebase.google.com/) → Project settings → Your apps → iOS app, download **GoogleService-Info.plist**.
+   - Put it in: `ios/ReactNativeFirebase/GoogleService-Info.plist`.
+   - Add it to the Xcode project (drag into the `ReactNativeFirebase` group and ensure “Copy items if needed” and the app target are checked).
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+2. **Install CocoaPods and pods**
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+   ```bash
+   cd ios
+   bundle install
+   bundle exec pod install
+   cd ..
+   ```
 
-```sh
-bundle install
-```
+3. **Run the app**
 
-Then, and every time you update your native dependencies, run:
+   ```bash
+   npm run ios
+   ```
 
-```sh
-bundle exec pod install
-```
+---
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## Android setup
 
-```sh
-# Using npm
-npm run ios
+### Already configured in the project
 
-# OR using Yarn
-yarn ios
-```
+- **Application ID:** `com.reactnativefirebase` (in `android/app/build.gradle` and `AndroidManifest.xml`).
+- **MainApplication.kt** uses React Native’s default setup; Firebase packages are linked via autolinking.
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### What you need to do
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+1. **Add Firebase config file**
+   - In [Firebase Console](https://console.firebase.google.com/) → Project settings → Your apps → Android app, download **google-services.json**.
+   - Put it in: `android/app/google-services.json`.
 
-## Step 3: Modify your app
+2. **Enable Google Services plugin**
+   - **Root** `android/build.gradle`: in `buildscript.dependencies`, add:
+     ```gradle
+     classpath("com.google.gms:google-services:4.4.2")
+     ```
+   - **App** `android/app/build.gradle`: at the bottom of the file, add:
+     ```gradle
+     apply plugin: "com.google.gms.google-services"
+     ```
 
-Now that you have successfully run the app, let's make changes!
+3. **Run the app**
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+   ```bash
+   npm run android
+   ```
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+---
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## Running the app
 
-## Congratulations! :tada:
+1. Start Metro (from project root):
 
-You've successfully run and modified your React Native App. :partying_face:
+   ```bash
+   npm start
+   ```
 
-### Now what?
+2. In another terminal:
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+   - **iOS:** `npm run ios`  
+   - **Android:** `npm run android`  
 
-# Troubleshooting
+---
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+## Project structure (relevant parts)
 
-# Learn More
+| Path | Purpose |
+|------|--------|
+| `App.tsx` | Root component (SafeAreaProvider, NewAppScreen) |
+| `ios/ReactNativeFirebase/AppDelegate.swift` | iOS entry; Firebase init |
+| `ios/Podfile` | iOS pods; Firebase static framework flags |
+| `android/app/build.gradle` | App ID, signing, dependencies |
+| `android/app/src/main/.../MainApplication.kt` | Android app entry |
 
-To learn more about React Native, take a look at the following resources:
+---
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
-# react-native-firebase-setup-guide
+## Scripts
+
+| Command | Description |
+|--------|-------------|
+| `npm start` | Start Metro bundler |
+| `npm run ios` | Run iOS app |
+| `npm run android` | Run Android app |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run Jest tests |
+
+---
+
+## Learn more
+
+- [React Native](https://reactnative.dev)
+- [React Native Firebase](https://rnfirebase.io/)
