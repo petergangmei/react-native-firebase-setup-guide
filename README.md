@@ -27,32 +27,122 @@ npm install
 
 ## iOS setup
 
-### Already configured in the project
-
-- **AppDelegate** (`ios/ReactNativeFirebase/AppDelegate.swift`): `FirebaseCore` imported and `FirebaseApp.configure()` called in `didFinishLaunchingWithOptions`.
-- **Podfile** (`ios/Podfile`): `use_frameworks! :linkage => :static` and `$RNFirebaseAsStaticFramework = true` for React Native Firebase.
-
-### What you need to do
-
-1. **Add Firebase config file**
+### 1. Add Firebase config file
    - In [Firebase Console](https://console.firebase.google.com/) → Project settings → Your apps → iOS app, download **GoogleService-Info.plist**.
    - Put it in: `ios/ReactNativeFirebase/GoogleService-Info.plist`.
    - Add it to the Xcode project (drag into the `ReactNativeFirebase` group and ensure “Copy items if needed” and the app target are checked).
 
-2. **Install CocoaPods and pods**
+### 2. Podfile (full file for copy-paste)
 
-   ```bash
-   cd ios
-   bundle install
-   bundle exec pod install
-   cd ..
-   ```
+Replace the contents of `ios/Podfile` with the following. Required for React Native Firebase: `use_frameworks! :linkage => :static` and `$RNFirebaseAsStaticFramework = true` inside the target.
 
-3. **Run the app**
+```ruby
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
 
-   ```bash
-   npm run ios
-   ```
+platform :ios, min_ios_version_supported
+prepare_react_native_project!
+
+
+target 'ReactNativeFirebase' do
+  config = use_native_modules!
+
+
+  use_frameworks! :linkage => :static
+  $RNFirebaseAsStaticFramework = true
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false,
+      # :ccache_enabled => true
+    )
+  end
+end
+```
+
+### 3. AppDelegate (full file for copy-paste)
+
+Replace the contents of `ios/ReactNativeFirebase/AppDelegate.swift` with the following.
+
+**What you must add or change for Firebase to work:**
+
+- **Import:** Add `import FirebaseCore` at the top.
+- **In `application(_:didFinishLaunchingWithOptions:)`:** Call `FirebaseApp.configure()` at the very beginning of the method (before creating the React Native delegate and factory).
+
+```swift
+import UIKit
+import React
+import React_RCTAppDelegate
+import ReactAppDependencyProvider
+import FirebaseCore
+
+@main
+class AppDelegate: UIResponder, UIApplicationDelegate {
+  var window: UIWindow?
+
+  var reactNativeDelegate: ReactNativeDelegate?
+  var reactNativeFactory: RCTReactNativeFactory?
+
+  func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+  ) -> Bool {
+    FirebaseApp.configure()
+    let delegate = ReactNativeDelegate()
+    let factory = RCTReactNativeFactory(delegate: delegate)
+    delegate.dependencyProvider = RCTAppDependencyProvider()
+
+    reactNativeDelegate = delegate
+    reactNativeFactory = factory
+
+    window = UIWindow(frame: UIScreen.main.bounds)
+
+    factory.startReactNative(
+      withModuleName: "ReactNativeFirebase",
+      in: window,
+      launchOptions: launchOptions
+    )
+
+    return true
+  }
+}
+
+class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
+  override func sourceURL(for bridge: RCTBridge) -> URL? {
+    self.bundleURL()
+  }
+
+  override func bundleURL() -> URL? {
+#if DEBUG
+    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+#else
+    Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+#endif
+  }
+}
+```
+
+### 4. Install pods and run
+
+```bash
+cd ios
+bundle install
+bundle exec pod install
+cd ..
+npm run ios
+```
 
 ---
 
