@@ -8,27 +8,17 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
-use_frameworks! :linkage => :static
-$RNFirebaseAsStaticFramework = true
-
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
 
 target 'ReactNativeFirebase' do
   config = use_native_modules!
 
-  pod 'GoogleUtilities', :modular_headers => true
-  pod 'Firebase', :modular_headers => true
-  pod 'FirebaseCore', :modular_headers => true
-  pod 'FirebaseCoreInternal', :modular_headers => true
-  pod 'FirebaseAuth', :modular_headers => true #if you need auth
-  pod 'FirebaseFirestore', :modular_headers => true
+
+  use_frameworks! :linkage => :static
+  $RNFirebaseAsStaticFramework = true
 
   use_react_native!(
     :path => config[:reactNativePath],
+    # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
@@ -37,16 +27,7 @@ target 'ReactNativeFirebase' do
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
+      # :ccache_enabled => true
     )
-    installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |bc|
-        bc.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-        if target.name.start_with?('RNFB')
-          bc.build_settings['CLANG_ENABLE_MODULES'] = 'NO'
-          bc.build_settings['DEFINES_MODULE'] = 'NO'
-        end
-      end
-    end
   end
 end
-
